@@ -1,9 +1,12 @@
 import * as functions from "firebase-functions";
-import { createApp } from "./server";
+import { createRestApi, createStaticFileApp } from "./server";
 
 import { initializeApp } from "firebase-admin";
 
 initializeApp();
 
-const app = createApp();
-export const helloWorld = functions.https.onRequest(app);
+const staticFilesApp = createStaticFileApp();
+const restApiApp = createRestApi();
+
+export const files = functions.https.onRequest(staticFilesApp);
+export const api = functions.https.onRequest(restApiApp);
