@@ -18,7 +18,7 @@ export const createStaticFileApp = () => {
   return app;
 };
 
-export const createRestApi = () => {
+export const createRestApi = (prefix: string = "/api/contacts") => {
   interface ContactData {
     firstName?: string;
     lastName?: string;
@@ -41,77 +41,75 @@ export const createRestApi = () => {
     );
   };
 
-  app.get("/contacts", async (req, res) => {
-    const { docs } = await contactsCollection.get();
-    const contacts = docs.map(doc => {
-      return { id: doc.id, ...doc.data() };
+  app
+    .route(prefix)
+    .get(async (req, res) => {
+      const { docs } = await contactsCollection.get();
+      const contacts = docs.map(doc => {
+        return { id: doc.id, ...doc.data() };
+      });
+      return res.json({ data: { contacts } });
+    })
+    .get(async (req, res) => {
+      const { id } = req.params;
+
+      const doc = await contactsCollection.doc(id).get();
+
+      if (!doc.exists) {
+        return res.status(404).json({ status: "NOT FOUND" });
+      }
+
+      const contact = { id: doc.id, ...doc.data() };
+      return res.json({ data: contact });
+    })
+    .post(async (req, res) => {
+      const { firstName, lastName, address } = req.body;
+      const data = { firstName, lastName, address };
+
+      if (!validateData(data)) {
+        return res.status(400).end();
+      }
+      const doc = await contactsCollection.add(data);
+
+      return res.status(201).json({
+        status: "SUCCESS",
+        data: { id: doc.id, firstName, lastName, address }
+      });
+    })
+    .put(async (req, res) => {
+      const { id } = req.params;
+
+      const doc = await contactsCollection.doc(id).get();
+
+      if (!doc.exists) {
+        return res.status(404).json({ status: "NOT FOUND" });
+      }
+
+      const { firstName, lastName, address } = req.body;
+      const data = { firstName, lastName, address };
+
+      if (!validateData(data)) {
+        return res.status(400).end();
+      }
+
+      await contactsCollection.doc(id).set(data);
+
+      const contact = { id: doc.id, ...data };
+      return res.json({ data: contact });
+    })
+    .delete(async (req, res) => {
+      const { id } = req.params;
+
+      const doc = await contactsCollection.doc(id).get();
+
+      if (!doc.exists) {
+        return res.status(404).json({ status: "NOT FOUND" });
+      }
+
+      await contactsCollection.doc(id).delete();
+
+      return res.status(204).end();
     });
-    return res.json({ data: { contacts } });
-  });
-
-  app.get("/contacts/:id", async (req, res) => {
-    const { id } = req.params;
-
-    const doc = await contactsCollection.doc(id).get();
-
-    if (!doc.exists) {
-      return res.status(404).json({ status: "NOT FOUND" });
-    }
-
-    const contact = { id: doc.id, ...doc.data() };
-    return res.json({ data: contact });
-  });
-
-  app.post("/contacts", async (req, res) => {
-    const { firstName, lastName, address } = req.body;
-    const data = { firstName, lastName, address };
-
-    if (!validateData(data)) {
-      return res.status(400).end();
-    }
-    const doc = await contactsCollection.add(data);
-
-    return res.status(201).json({
-      status: "SUCCESS",
-      data: { id: doc.id, firstName, lastName, address }
-    });
-  });
-
-  app.put("/contacts/:id", async (req, res) => {
-    const { id } = req.params;
-
-    const doc = await contactsCollection.doc(id).get();
-
-    if (!doc.exists) {
-      return res.status(404).json({ status: "NOT FOUND" });
-    }
-
-    const { firstName, lastName, address } = req.body;
-    const data = { firstName, lastName, address };
-
-    if (!validateData(data)) {
-      return res.status(400).end();
-    }
-
-    await contactsCollection.doc(id).set(data);
-
-    const contact = { id: doc.id, ...data };
-    return res.json({ data: contact });
-  });
-
-  app.delete("/contacts/:id", async (req, res) => {
-    const { id } = req.params;
-
-    const doc = await contactsCollection.doc(id).get();
-
-    if (!doc.exists) {
-      return res.status(404).json({ status: "NOT FOUND" });
-    }
-
-    await contactsCollection.doc(id).delete();
-
-    return res.status(204).end();
-  });
 
   return app;
 };
