@@ -9,8 +9,8 @@ export const createStaticFileApp = () => {
 
   app.get("**", async (req, res) => {
     const { path } = req;
-    const [file] = await bucket.file("index.html").get();
-    const content = (await file.download())[0].toString();
+    const file = await bucket.file("index.html").get();
+    const content = (await file[0].download())[0].toString();
     logger.info("JUEZA", { path });
     res.send(content);
   });
