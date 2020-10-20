@@ -4,7 +4,7 @@
   "description": "",
   "main": "lib/index.js",
   "scripts": {
-    "dev": "GOOGLE_APPLICATION_CREDENTIALS=./sak.json npm run build && concurrently --kill-others-on-fail 'npm run watch:tsc' 'npm run watch:firebase'",
+    "dev": "npm run build && concurrently --kill-others-on-fail 'npm run watch:tsc' 'npm run watch:firebase'",
     "watch:tsc": "tsc -w",
     "watch:firebase": "firebase emulators:start --inspect-functions",
     "prebuild": "rm -rf lib",
